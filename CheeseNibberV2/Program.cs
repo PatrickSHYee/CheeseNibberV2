@@ -15,7 +15,7 @@ namespace CheeseNibblerV2
             {
             CheeseNibbler game = new CheeseNibbler();
             game.PlayGame();
-                Console.Write("Do you want to play again? (y/no)");
+                Console.Write("Do you want to play again? (y/n)");
                 string result = Console.ReadLine();
                 result = result.ToLower();
                 if (result == "y" || result == "yes") notQuit = false;
