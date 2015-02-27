@@ -18,8 +18,9 @@ namespace CheeseNibblerV2
                 Console.Write("Do you want to play again? (y/n)");
                 string result = Console.ReadLine();
                 result = result.ToLower();
-                if (result == "y" || result == "yes") notQuit = false;
-                if (result.Contains("yes")) notQuit = false;
+                if (result == "n" || result == "no") notQuit = false;
+                if (result.Contains("no")) notQuit = false;
+                game.Cats.Clear();
             } while (notQuit);
         }
     }
@@ -114,7 +115,7 @@ namespace CheeseNibblerV2
         {
             // clear the console
             Console.Clear();
-            // display the gride to the scree
+            // display the gride to the screen
             for (int y = 0; y < TheGrid.GetLength(1); y++)
             {
                 for (int x = 0; x < TheGrid.GetLength(0); x++)
@@ -128,10 +129,10 @@ namespace CheeseNibblerV2
                             Console.Write("[G]");  // printing the goal
                             break;
                         case PointStatus.Cat:
-                            Console.Write("[C]");  // print the kitty or the enemy
+                            Console.Write("[k]");  // print the kitty or the enemy
                             break;
                         case PointStatus.CatAndCheese:
-                            Console.Write("CnC");  // print the cat and the cheese
+                            Console.Write("[C]");  // print the cat and the cheese
                             break;
                         default:
                             Console.Write("[ ]");  // print the walkable spaces
@@ -280,6 +281,10 @@ namespace CheeseNibblerV2
             this.Cats.Last().Position.Status = PointStatus.Cat;
         }
 
+        /// <summary>
+        /// Moves the cat and makes the checks
+        /// </summary>
+        /// <param name="cat"></param>
         public void MoveCat(Cat cat)
         {
             int chance = RNG.Next(1, 100);
@@ -287,63 +292,69 @@ namespace CheeseNibblerV2
             int diffY = this.TheHero.Position.Y - cat.Position.Y;
             // new placeholder position if the information of the grid
             Point newPos = TheGrid[cat.Position.X, cat.Position.Y];
+            // update the cat's position via the grid
+
+            // this check if the status is CatAndCheese and the cat is leaving the cheese.
+            if (newPos.Status == PointStatus.CatAndCheese)
+            {
+                TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cheese;
+            }
+            else
+            {
+                TheGrid[newPos.X, newPos.Y].Status = PointStatus.Empty;    // update the grid with empty
+            }
 
             // 80% chance a cat will move
-            if (chance <= 80)
+            //if (chance <= 80)  // it's immpossible for the player to play
+            if (chance <= 50)
             {
-                if (diffX != 0)  // relative position two each object of the position X
+                if (diffX < 0 && cat.Position.X - 1 >= 0)  // the mouse can move to the left
                 {
-                    if (diffX < 0 && cat.Position.X - 1 >= 0)  // the mouse can move to the left
-                    {
-                        newPos.X--;
-                    }
-                    if (diffX > 0 && cat.Position.X + 1 < TheGrid.GetLength(1))  // the mouse can move to the right
-                    {
-                        newPos.X++;
-                    }
+                    newPos.X--;
                 }
-                if (diffY != 0)  // relative position two each object of the position Y
+                if (diffX > 0 && cat.Position.X + 1 < TheGrid.GetLength(1))  // the mouse can move to the right
                 {
-                    if (diffY < 0 && cat.Position.Y - 1 >= 0)  // the mouse can move up
-                    {
-                        newPos.Y--;
-                    }
-                    if (diffY > 0 && cat.Position.Y + 1 < TheGrid.GetLength(0))  // the mouse can move down
-                    {
-                        newPos.Y++;
-                    }
+                    newPos.X++;
+                }
+                if (diffY < 0 && cat.Position.Y - 1 >= 0)  // the mouse can move up
+                {
+                    newPos.Y--;
+                }
+                if (diffY > 0 && cat.Position.Y + 1 < TheGrid.GetLength(0))  // the mouse can move down
+                {
+                    newPos.Y++;
                 }
             }
-            // getting the new position on the grid
-            newPos = TheGrid[newPos.X, newPos.Y];
+
             // check the cat and the cheese are at the same position
-            if (newPos.Status == PointStatus.Cheese)
+            if (TheGrid[newPos.X, newPos.Y].Status == PointStatus.Cheese)
             {
                 TheGrid[newPos.X, newPos.Y].Status = PointStatus.CatAndCheese;
             }
-            // check the cat on the mouse
-            if (newPos.Status == PointStatus.Mouse)
+            else
             {
-                this.TheHero.HasBeenPouncedOn = true;
+                // set the new mouse position to the mouse
+                this.TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cat;
+
             }
-            // update the cat's position via the grid
-            cat.Position.Status = PointStatus.Empty;    // update the grid with empty
-            // set the new mouse position to the mouse
-            this.TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cat;
             // update the values of the mouse
             cat.Position = this.TheGrid[newPos.X, newPos.Y]; ;
         }
 
         public void PlayGame()
         {
-            while (!this.TheHero.HasBeenPouncedOn && this.TheHero.Energy > 0)
+            while (!this.TheHero.HasBeenPouncedOn && this.TheHero.Energy >= 0)
             {
                 DrawGrid();
                 Console.WriteLine("Energy: {0}",this.TheHero.Energy);
                 MoveMouse(GetUserMove());
-                foreach (Cat kit in Cats)
+                for (int i = 0; i < Cats.Count; i++)
                 {
-                    MoveCat(kit);
+                    MoveCat(Cats[i]);
+                    // check is done here because sometimes the mouse will be under the cat.
+                    // So does it looks like the user is controlling a cat.
+                    if (Cats[i].Position == this.TheHero.Position)
+                        this.TheHero.HasBeenPouncedOn = true;
                 }
             }
             if (this.TheHero.HasBeenPouncedOn)
