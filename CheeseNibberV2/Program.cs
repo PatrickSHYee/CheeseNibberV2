@@ -306,7 +306,7 @@ namespace CheeseNibblerV2
 
             // 80% chance a cat will move
             //if (chance <= 80)  // it's immpossible for the player to play
-            if (chance <= 50)
+            if (chance <= 35)
             {
                 if (diffX < 0 && cat.Position.X - 1 >= 0)  // the mouse can move to the left
                 {
