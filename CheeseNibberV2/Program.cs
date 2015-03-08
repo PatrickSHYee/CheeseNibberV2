@@ -265,20 +265,19 @@ namespace CheeseNibblerV2
         /// </summary>
         public void AddCat() {
             Cat badKitty = new Cat();
-            Cats.Add(badKitty);
-            PlaceCat();
-
+            Cats.Add(PlaceCat(badKitty));
         }
 
         /// <summary>
         /// Places a cat on the grid at a random position on the grid
         /// </summary>
-        public void PlaceCat() {
+        public Cat PlaceCat(Cat cat) {
             do
             {
-                this.Cats.Last().Position = TheGrid[RNG.Next(0, TheGrid.GetLength(0)), RNG.Next(0, TheGrid.GetLength(1))];
-            } while (this.Cats.Last().Position.Status != PointStatus.Empty);
-            this.Cats.Last().Position.Status = PointStatus.Cat;
+                cat.Position = TheGrid[RNG.Next(0, TheGrid.GetLength(0)), RNG.Next(0, TheGrid.GetLength(1))];
+            } while (cat.Position.Status != PointStatus.Empty);
+            cat.Position.Status = PointStatus.Cat;
+            return cat;
         }
 
         /// <summary>
@@ -292,26 +291,27 @@ namespace CheeseNibblerV2
             int diffY = this.TheHero.Position.Y - cat.Position.Y;
             // new placeholder position if the information of the grid
             Point newPos = TheGrid[cat.Position.X, cat.Position.Y];
-            // update the cat's position via the grid
-
-            // this check if the status is CatAndCheese and the cat is leaving the cheese.
-            if (newPos.Status == PointStatus.CatAndCheese)
-            {
-                TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cheese;
-            }
-            else
-            {
-                TheGrid[newPos.X, newPos.Y].Status = PointStatus.Empty;    // update the grid with empty
-            }
 
             // 80% chance a cat will move
             //if (chance <= 80)  // it's immpossible for the player to play
             if (chance <= 35)
             {
+                // update the cat's position via the grid
+                // this check if the status is CatAndCheese and the cat is leaving the cheese or an empty.
+                if (newPos.Status == PointStatus.CatAndCheese)
+                {
+                    TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cheese;
+                }
+                else
+                {
+                    TheGrid[newPos.X, newPos.Y].Status = PointStatus.Empty;    // update the grid with empty
+                }
                 if (diffX < 0 && cat.Position.X - 1 >= 0)  // the mouse can move to the left
                 {
                     newPos.X--;
                 }
+
+                // check if the cat can move
                 if (diffX > 0 && cat.Position.X + 1 < TheGrid.GetLength(1))  // the mouse can move to the right
                 {
                     newPos.X++;
@@ -324,18 +324,18 @@ namespace CheeseNibblerV2
                 {
                     newPos.Y++;
                 }
-            }
+                
+                // check the cat and the cheese are at the same position
+                if (TheGrid[newPos.X, newPos.Y].Status == PointStatus.Cheese)
+                {
+                    TheGrid[newPos.X, newPos.Y].Status = PointStatus.CatAndCheese;
+                }
+                else
+                {
+                    // set the new mouse position to the mouse
+                    this.TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cat;
 
-            // check the cat and the cheese are at the same position
-            if (TheGrid[newPos.X, newPos.Y].Status == PointStatus.Cheese)
-            {
-                TheGrid[newPos.X, newPos.Y].Status = PointStatus.CatAndCheese;
-            }
-            else
-            {
-                // set the new mouse position to the mouse
-                this.TheGrid[newPos.X, newPos.Y].Status = PointStatus.Cat;
-
+                }
             }
             // update the values of the mouse
             cat.Position = this.TheGrid[newPos.X, newPos.Y]; ;
